@@ -1,10 +1,5 @@
-# 1. プロバイダー設定（AWSを使う宣言）
-provider "aws" {
-  region = "ap-northeast-1" # 東京リージョン
-}
-
 # 2. ネットワークの土台 (VPC)
-resource "aws_vpc" "main" {
+resource "aws_vpc" "app" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_support   = true
   enable_dns_hostnames = true
@@ -15,8 +10,8 @@ resource "aws_vpc" "main" {
 }
 
 # 3. インターネットゲートウェイ (IGW)
-resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
+resource "aws_internet_gateway" "app" {
+  vpc_id = aws_vpc.app.id
 
   tags = {
     Name = "terraform-lesson-igw"
@@ -24,8 +19,9 @@ resource "aws_internet_gateway" "main" {
 }
 
 # 4. サブネット (Subnet)
-resource "aws_subnet" "public" {
-  vpc_id            = aws_vpc.main.id
+## 4.1 Public Subnet
+resource "aws_subnet" "public_1a" {
+  vpc_id            = aws_vpc.app.id
   cidr_block        = "10.0.1.0/24"
   availability_zone = "ap-northeast-1a"
 
@@ -33,13 +29,21 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "terraform-lesson-public-subnet"
+    Name = "terraform-lesson-public-subnet-1a"
   }
 }
 
-# Private Subnet
+resource "aws_subnet" "public_1c" {
+  vpc_id                  = aws_vpc.app.id
+  cidr_block              = "10.0.3.0/24"
+  availability_zone       = "ap-northeast-1c"
+  map_public_ip_on_launch = true
+  tags                    = { Name = "terraform-lesson-public-subnet-1c" }
+}
+
+## 4.2 Private Subnet
 resource "aws_subnet" "private" {
-  vpc_id            = aws_vpc.main.id
+  vpc_id            = aws_vpc.app.id
   cidr_block        = "10.0.2.0/24"
   availability_zone = "ap-northeast-1a"
 
@@ -51,12 +55,12 @@ resource "aws_subnet" "private" {
 # 5. ルートテーブル (Route Table)
 # Public用ルートテーブル
 resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
+  vpc_id = aws_vpc.app.id
 
   # 外の世界(0.0.0.0/0)への行き先案内
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.main.id
+    gateway_id = aws_internet_gateway.app.id
   }
 
   tags = {
@@ -66,7 +70,12 @@ resource "aws_route_table" "public" {
 
 # 6. ルートテーブルの紐付け (Association)
 # 「Public Subnet」に「Public用ルートテーブル」を設置する
-resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
+resource "aws_route_table_association" "public_1a" {
+  subnet_id      = aws_subnet.public_1a.id
+  route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "public_1c" {
+  subnet_id      = aws_subnet.public_1c.id
   route_table_id = aws_route_table.public.id
 }
