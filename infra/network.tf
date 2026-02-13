@@ -68,11 +68,5 @@ resource "aws_route_table" "public" {
 # 「Public Subnet」に「Public用ルートテーブル」を設置する
 resource "aws_route_table_association" "public" {
   subnet_id      = aws_subnet.public.id
-  
   route_table_id = aws_route_table.public.id
-}
-
-# 7. ECSクラスター (ECS Cluster) - 箱だけ作成
-resource "aws_ecs_cluster" "main" {
-  name = "my-terraform-cluster"
 }
