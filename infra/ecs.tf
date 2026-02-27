@@ -8,14 +8,26 @@ resource "aws_ecs_task_definition" "app" {
   family                   = "my-nextjs-task"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"
-  memory                   = "512"
+  cpu                      = "512"
+  memory                   = "1024"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
 
   container_definitions = jsonencode([{
     name         = "nextjs-container"
     image        = "849276620008.dkr.ecr.ap-northeast-1.amazonaws.com/nextjs-sample-app:latest"
     portMappings = [{ containerPort = 3000, hostPort = 3000 }]
+
+    # 環境変数（ホスト名、DB名、ユーザー名）
+    environment = [
+      { name = "DB_HOST", value = aws_db_instance.app.address },
+      { name = "DB_NAME", value = aws_db_instance.app.db_name },
+      { name = "DB_USER", value = aws_db_instance.app.username }
+    ]
+    
+    # 秘密の環境変数（DBパスワード） - SSM Parameter Storeから値を取得する設定
+    secrets = [
+      { name = "DB_PASSWORD", valueFrom = aws_ssm_parameter.db_password.arn }
+    ]
   }])
 }
 

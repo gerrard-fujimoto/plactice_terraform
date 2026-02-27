@@ -42,13 +42,23 @@ resource "aws_subnet" "public_1c" {
 }
 
 ## 4.2 Private Subnet
-resource "aws_subnet" "private" {
+resource "aws_subnet" "private_1a" {
   vpc_id            = aws_vpc.app.id
   cidr_block        = "10.0.2.0/24"
   availability_zone = "ap-northeast-1a"
 
   tags = {
-    Name = "terraform-lesson-private-subnet"
+    Name = "terraform-lesson-private-subnet-1a"
+  }
+}
+
+resource "aws_subnet" "private_1c" {
+  vpc_id            = aws_vpc.app.id
+  cidr_block        = "10.0.4.0/24" # 他のサブネットと被らないIP帯
+  availability_zone = "ap-northeast-1c"
+
+  tags = {
+    Name = "terraform-lesson-private-subnet-1c"
   }
 }
 
@@ -78,4 +88,19 @@ resource "aws_route_table_association" "public_1a" {
 resource "aws_route_table_association" "public_1c" {
   subnet_id      = aws_subnet.public_1c.id
   route_table_id = aws_route_table.public.id
+}
+
+# 8. DBサブネットグループ（DB Subnet Group）
+# RDSを配置するためのDBサブネットグループ
+resource "aws_db_subnet_group" "app" {
+  name       = "my-db-subnet-group"
+  
+  subnet_ids = [
+    aws_subnet.private_1a.id,
+    aws_subnet.private_1c.id
+  ]
+
+  tags = {
+    Name = "My DB subnet group"
+  }
 }

@@ -9,3 +9,21 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
+
+# SSM Parameter Store 読み取り権限
+resource "aws_iam_policy" "ecs_ssm_policy" {
+  name = "ecs-ssm-policy"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["ssm:GetParameters", "ssm:GetParameter"]
+      Resource = [aws_ssm_parameter.db_password.arn]
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_ssm_policy_attach" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.ecs_ssm_policy.arn
+}

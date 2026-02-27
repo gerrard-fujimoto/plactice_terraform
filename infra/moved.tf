@@ -52,3 +52,8 @@ moved {
   from = aws_ecr_repository.main
   to   = aws_ecr_repository.app
 }
+
+moved {
+  from = aws_subnet.private
+  to   = aws_subnet.private_1a
+}
